@@ -14,6 +14,8 @@ int main(int argc, char** argv)
 	int sockfd;
 	struct sockaddr_in servaddr;
 	char buffer[SIZE];
+	int end = 1;
+	
 
 	if ((sockfd = socket (AF_INET, SOCK_STREAM, 0)) <0) {
 		printf("Problem in creating the socket");
@@ -33,14 +35,20 @@ int main(int argc, char** argv)
 	}
 
 	
-	printf("OK - elfogad \nPASSZ - passzolás");
+	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\nTŐKE - 1000\n");
 		
 	for (;;)
 	{
 		//egy menet
-		
+		if(end == 0)
+		{
+			exit(4);
+		}
+
 		int osszeg = 0;
 		int osszeg_ellen = 0;
+
+
 		
 		for(;;)
 		{
@@ -68,7 +76,7 @@ int main(int argc, char** argv)
 				if(p)
 					lap = p[0];
 				
-				printf("Az alábbi kártyát kapta: %c %c\n", szin, lap);
+				printf("Kapott kártya: %c %c\n", szin, lap);
 				if(lap == 'L'){
 					osszeg += 2;
 				}
@@ -88,9 +96,11 @@ int main(int argc, char** argv)
 			else if(buffer[0] == '2'){
 				//ha a kapott üzenet 2-vel kezdődik, az azt jelenti, lezárult egy kör, és az eredményt kaptuk meg
 				// az eredményt küldték
-				printf("%s \n",buffer);
-				printf("LEZÁRULT A KÖR");
-				printf("================================================================\n");
+				
+				printf("%s\n",buffer);
+				printf("=================================\n");
+				printf("VÉGE A KÖRNEK\n");
+				printf("=================================\n");
 				break;
 			}
 			else if(buffer[0] == '3'){
@@ -98,6 +108,7 @@ int main(int argc, char** argv)
 				//szétbontjuk a sztringet:
 				//levágjuk a kezdő számot, majd felbontjuk ',' karakterekre
 				char buffer_copy[SIZE];
+				
 				memcpy(buffer_copy, buffer, strlen(buffer)+1);
 				char *p;
 				p = strtok(buffer_copy, ",");
@@ -112,7 +123,7 @@ int main(int argc, char** argv)
 				if(p)
 					lap = p[0];
 				
-				printf("Az alábbi kártyát kapta: %c %c\n", szin, lap);
+				printf("A másik játékos kártyája: %c %c\n", szin, lap);
 				if(lap == 'L'){
 					osszeg_ellen += 2;
 				}
@@ -133,18 +144,43 @@ int main(int argc, char** argv)
 			{
 				//ha a kapott üzenet 4-el kezdődik, az azt jelenti, hogy vár tőlünk választ a szerver
 				//hogy passzolni szeretnék, vagy jöhet a következő kártya
-				printf("Kér még kártyát vagy passzol?\n");
+				printf("Kér még kártyát vagy feladja?\n");
 				char *beolvas = malloc(SIZE);
 				memset(buffer, 0, 256);
 				scanf("%255s", beolvas);
 				memcpy(buffer, beolvas, strlen(beolvas)+1);
 				send(sockfd, buffer, SIZE, 0);
 			}
-				
+			else if(buffer[0] == '5')
+			{
+				printf("Új kör vagy vége?\n");
+				char *beolvas = malloc(SIZE);
+				memset(buffer, 0, 256);
+				scanf("%255s", beolvas);
+				memcpy(buffer, beolvas, strlen(beolvas)+1);
+				send(sockfd, buffer, SIZE, 0);
+
+			}
+			else if(buffer[0] == '6'){
+				end = 0;
+				break;
+			}
+			if(buffer[0]= '7')
+			{
+				printf("Adja meg tétjét!\n");
+				char *beolvas = malloc(SIZE);
+				memset(buffer, 0, 256);
+				scanf("%255s", beolvas);
+				memcpy(buffer, beolvas, strlen(beolvas)+1);
+				send(sockfd, buffer, SIZE, 0);
+			}
+
+			
 			printf("--------------------------\n");
 				
 		}
 
+			
 	}
 		
 	

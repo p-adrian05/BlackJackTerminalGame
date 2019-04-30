@@ -37,15 +37,15 @@ void initPakli()
 	
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
-			int ertek;
-			if(lap[j] == 'A')
-				ertek = 11;
-			if(lap[j] == 'L')
-				ertek = 2;
-			if(lap[j] == 'F')
-				ertek = 3;
-			if(lap[j] == 'K')
-				ertek = 4;
+			//int ertek;
+			//if(lap[j] == 'A')
+			//	ertek = 11;
+			//if(lap[j] == 'L')
+			//	ertek = 2;
+			//if(lap[j] == 'F')
+			//	ertek = 3;
+		//	if(lap[j] == 'K')
+			//	ertek = 4;
 				
 			Pakli[index][0] = szin[i];
 			Pakli[index][1] = lap[j];
@@ -101,6 +101,22 @@ char* createStringBekeres()
 	return jel;
 }
 
+char* createStringUjra()
+{
+	char *jel = "5";
+	return jel;
+}
+char* createStringEnd()
+{
+	char *jel = "6";
+	return jel;
+}
+char* createStringTet()
+{
+	char *jel = "7";
+	return jel;
+}
+
 //csak ellenőrizzük a kapott üzenetet
 int isOkMessage(char *m){
 	char ok[] = "OK";
@@ -111,9 +127,18 @@ int isOkMessage(char *m){
 	return 0;
 }
 
-int isPassMessage(char *m){
-	char passz[] = "PASSZ";
-	if( strcmp(m, passz) == 0)
+int isGiveUpMessage(char *m){
+	char felad[] = "FELAD";
+	if( strcmp(m, felad) == 0)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+int isEndMessage(char *m){
+	char vege[] = "VEGE";
+	if( strcmp(m, vege) == 0)
 	{
 		return 1;
 	}
@@ -193,15 +218,17 @@ int main(int argc, char* argv[])
 
 	listen (listenfd, 2);
 
-	printf("%s\n","Server running...waiting for connections.");
+	printf("%s\n","Waiting for connections.");
 	
 	clilen_p1 = sizeof(cliaddr_p1);
 	player1_socket = accept (listenfd, (struct sockaddr *) &cliaddr_p1, &clilen_p1);
-	printf("%s\n","Player one has connected.");
+	printf("%s\n","Player one connected.");
 	
+	printf("%s\n","Waiting for player two connection.");
+
 	clilen_p2 = sizeof(cliaddr_p2);
 	player2_socket = accept (listenfd, (struct sockaddr *) &cliaddr_p2, &clilen_p2);
-	printf("%s\n","Player two has connected.");
+	printf("%s\n","Player two connected.");
 	
 	for (;;)
 	{	
@@ -214,10 +241,21 @@ int main(int argc, char* argv[])
 		printf("%s \n", buffer);
 			
 		//írunk a játékosoknak, de itt most nem várunk választ
-		send(player1_socket, buffer, SIZE, 0);
+		//memset(buffer, 0, 256);
+		//char *messageKeres = createStringTet();
+		//memcpy(buffer, messageKeres, strlen(messageKeres)+1);
 		
+		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
-			
+
+		//memset(buffer, 0, 256);
+		//recv(player1_socket, buffer, SIZE,0);
+		//int player1_tet = buffer[0] + '0';
+	//	memset(buffer, 0, 256);
+	//	recv(player2_socket, buffer, SIZE,0);
+	//	int player2_tet = buffer[0] +'0';
+	//	memset(buffer, 0, 256);
+
 		//minden kör elején nullázuk az összegeket
 		int player1_osszeg = 0;
 		int player2_osszeg = 0;
@@ -371,7 +409,7 @@ int main(int argc, char* argv[])
 				
 				printf("%s \n", buffer);
 				//feldolgozzuk a választ
-				if(isPassMessage(buffer))
+				if(isGiveUpMessage(buffer))
 					voltPassz_player1 = 1;
 				else if(isOkMessage(buffer))
 					;
@@ -393,7 +431,7 @@ int main(int argc, char* argv[])
 				recv(player2_socket, buffer, SIZE,0);
 				printf("%s \n", buffer);
 				//feldolgozzuk a választ
-				if(isPassMessage(buffer))
+				if(isGiveUpMessage(buffer))
 					voltPassz_player2 = 1;
 				else if(isOkMessage(buffer))
 					;
@@ -412,8 +450,31 @@ int main(int argc, char* argv[])
 		//Eredmények elküldése
 		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
-		
 		memset(buffer, 0, 256);
+
+		char * messageKeres = createStringUjra();
+		memcpy(buffer, messageKeres, strlen(messageKeres)+1);
+		send(player1_socket, buffer, SIZE, 0);
+		//várjuk a választ
+		memset(buffer, 0, 256);
+		recv(player1_socket, buffer, SIZE,0);
+		printf("%s \n", buffer);
+		
+		//feldolgozzuk a választ
+		if(isEndMessage(buffer))
+		{
+			memset(buffer, 0, 256);
+			char *messageKeres = createStringEnd();
+			memcpy(buffer, messageKeres, strlen(messageKeres)+1);
+			send(player1_socket, buffer, SIZE, 0);
+			send(player2_socket, buffer, SIZE, 0);
+			memset(buffer, 0, 256);
+			
+			
+		}
+			
+		
+
 	}
 
 
