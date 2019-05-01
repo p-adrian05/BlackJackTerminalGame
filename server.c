@@ -12,8 +12,7 @@
 #define SIZE 4096
 
 char Pakli[32][2];
-int player1_toke = 1000;
-int player2_toke=1000;
+
 //belerakjuk a kártyákat
 void initPakli()
 {
@@ -212,6 +211,38 @@ char* eredmenyMessage(int nyertes, int tet1, int tet2){
 	
 }
 
+
+char * createEredmenyMessage(char * eredmeny, int tet){
+	char str[12];
+	char *eredmeny2 = malloc(SIZE);
+	sprintf(str, "%d", tet);
+	strcpy(eredmeny2, eredmeny);
+	strcat(eredmeny2, str);
+	return eredmeny2;
+
+}
+char * createTokeMessagePlayerOne(int toke1){
+	char toke[32];
+	char *allas = malloc(SIZE);
+	sprintf(toke, "%d", toke1);
+	strcpy(allas, "9:Az első játékos egyenlege: " );
+	strcat(allas, toke);
+	return allas;
+
+}
+char * createTokeMessagePlayerTwo(int toke1){
+	char toke[32];
+	char *allas = malloc(SIZE);
+	sprintf(toke, "%d", toke1);
+	strcpy(allas, "9:A második játékos egyenlege: " );
+	strcat(allas, toke);
+	return allas;
+
+}
+
+int player1_toke=1000;
+int player2_toke=1000;
+
 int eredmenyTet(int nyertes, int tet1, int tet2){
 	int nyert1=tet1*2;
 	int nyert2=tet2*2;
@@ -229,39 +260,10 @@ int eredmenyTet(int nyertes, int tet1, int tet2){
 	}
 	else
 	{
-		return (0);
+		return 0;
 	}
 	
 }
-char * createEredmenyMessage(char * eredmeny, int tet){
-	char str[12];
-	char *eredmeny2 = malloc(SIZE);
-	sprintf(str, "%d", tet);
-	strcpy(eredmeny2, eredmeny);
-	strcat(eredmeny2, str);
-	return eredmeny2;
-
-}
-//char * createTokeMessagePlayerOne(int toke1){
-//	char toke[12];
-	//char *allas = malloc(SIZE);
-//	sprintf(toke, "%d", toke1);
-//	strcpy(allas, "9:Az első játékos egyenlege: " );
-//	strcat(allas, toke);
-//	return allas;
-
-//}
-//char * createTokeMessagePlayerTwo(int toke1){
-//	char toke[12];
-//	char *allas = malloc(SIZE);
-//	sprintf(toke, "%d", toke1);
-//	strcpy(allas, "9:A második játékos egyenlege: " );
-//	strcat(allas, toke);
-//	return allas;
-
-//}
-
-
 
 int main(int argc, char* argv[])
 {
@@ -273,6 +275,7 @@ int main(int argc, char* argv[])
 	int listenfd, n;
 	int player1_socket, player2_socket;
 	int player1_tet, player2_tet;
+	
 	socklen_t clilen_p1;
 	socklen_t clilen_p2;
 	char buffer[SIZE];
@@ -321,6 +324,9 @@ int main(int argc, char* argv[])
 		send(player2_socket, buffer, SIZE, 0);
 
 		//tet kerese
+		player1_tet=0;
+		player1_tet=0;	
+
 		memset(buffer, 0, 256);
 		char *messageK = createStringTet();
 		memcpy(buffer, messageK, strlen(messageK)+1);
@@ -340,7 +346,7 @@ int main(int argc, char* argv[])
 		//minden kör elején nullázuk az összegeket
 		int player1_osszeg = 0;
 		int player2_osszeg = 0;
-			
+		
 		//ebben a bool változóban tartjuk nyílván, hogy történt-e passz, ha történt, true-ra állítjuk
 		//ha történt passz, nem kell bizonyos küldéseknek lefutnia
 		int voltPassz_player1 = 0;
@@ -378,8 +384,12 @@ int main(int argc, char* argv[])
 			if(voltPassz_player2 && player1_osszeg>=21){
 				break;
 			}
-
-				
+			if(player1_osszeg<15 && voltPassz_player1){
+				player1_tet *= 2;
+			}
+			if(player2_osszeg<15 && voltPassz_player2){
+				player2_tet *= 2;
+			}	
 					
 			//ebben az if-ben küldi a szerver a "kihúzott" lapjait az első kliensnek
 			//nem lép be ha az első kliens passzolt, tehát nem kap új lapot
@@ -532,18 +542,18 @@ int main(int argc, char* argv[])
 		send(player2_socket, buffer, SIZE, 0);
 
 		//Egyenleg
-		//memset(buffer, 0, 256);
-		//char *messageToke1 = createTokeMessagePlayerOne(player1_toke);
-		//memcpy(buffer, messageToke1, strlen(messageToke1)+1);
-		//send(player1_socket, buffer, SIZE, 0);	
-		//send(player2_socket, buffer, SIZE, 0);
-		//memset(buffer, 0, 256);
+		memset(buffer, 0, 256);
+		char *messageToke1 = createTokeMessagePlayerOne(player1_toke);
+		memcpy(buffer, messageToke1, strlen(messageToke1)+1);
+		send(player1_socket, buffer, SIZE, 0);	
+		send(player2_socket, buffer, SIZE, 0);
+		memset(buffer, 0, 256);
 
-		//char *messageToke2 = createTokeMessagePlayerOne(player2_toke);
-		//memcpy(buffer, messageToke2, strlen(messageToke2)+1);
-		//send(player1_socket, buffer, SIZE, 0);	
-		///send(player2_socket, buffer, SIZE, 0);
-		//memset(buffer, 0, 256);
+		char *messageToke2 = createTokeMessagePlayerTwo(player2_toke);
+		memcpy(buffer, messageToke2, strlen(messageToke2)+1);
+		send(player1_socket, buffer, SIZE, 0);	
+		send(player2_socket, buffer, SIZE, 0);
+		memset(buffer, 0, 256);
 
 
 		//Ujra valasz

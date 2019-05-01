@@ -90,8 +90,7 @@ int main(int argc, char** argv)
 						printf("Kapott kártya: %c %c\n", szin, lap);
 				}
 				
-		
-				
+
 				if(lap == 'L'){
 					osszeg += 2;
 				}
@@ -209,6 +208,9 @@ int main(int argc, char** argv)
 				scanf("%255s", beolvas);
 				memcpy(buffer, beolvas, strlen(beolvas)+1);
 				send(sockfd, buffer, SIZE, 0);
+			}
+			else if(buffer[0]== '9'){
+				printf("%s\n",buffer);
 			}
 			
 
