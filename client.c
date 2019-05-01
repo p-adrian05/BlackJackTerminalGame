@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 	int sockfd;
 	struct sockaddr_in servaddr;
 	char buffer[SIZE];
+	
 	int end = 1;
 	
 
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
 
 	
 	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\nTŐKE - 1000\n");
-		
+   
 	for (;;)
 	{
 		//egy menet
@@ -62,21 +63,38 @@ int main(int argc, char** argv)
 				//szétbontjuk a sztringet:
 				//levágjuk a kezdő számot, majd felbontjuk ',' karakterekre
 				char buffer_copy[SIZE];
+				//printf("%s\n",buffer);
 				memcpy(buffer_copy, buffer, strlen(buffer)+1);
 				char *p;
 				p = strtok(buffer_copy, ",");
-
+				//printf("%s\n",p);
 				char lap;
+				int lap10;
 				char szin;
+
 				if(p)
 				{
 					szin = p[2];
 				}
 				p = strtok(NULL, ",");
-				if(p)
-					lap = p[0];
+				//printf("%s\n",p);
+				if(p){
+					
+						lap = p[0];
+			
+
+				}
+					
+				if(lap==':'){
+					printf("Kapott kártya: %c %d\n", szin, 10);
+				}
+				else
+				{
+						printf("Kapott kártya: %c %c\n", szin, lap);
+				}
 				
-				printf("Kapott kártya: %c %c\n", szin, lap);
+		
+				
 				if(lap == 'L'){
 					osszeg += 2;
 				}
@@ -86,6 +104,9 @@ int main(int argc, char** argv)
 					osszeg += 4;
 				else if(lap == 'A'){
 					osszeg += 11;
+				}
+				else if(lap==':'){
+					osszeg += 10 ;
 				}
 				else{
 					int ertek = lap - '0';
@@ -115,15 +136,26 @@ int main(int argc, char** argv)
 
 				char lap;
 				char szin;
+				int lap10;
 				if(p)
 				{
 					szin = p[2];
 				}
 				p = strtok(NULL, ",");
-				if(p)
-					lap = p[0];
+				if(p){
+					
+						lap = p[0];
+					
+				}
+					
+				if(lap==':'){
+					printf("A másik játékos kártyája: %c %d\n", szin, 10);
+				}
+				else
+				{
+						printf("A másik játékos kártyája: %c %c\n", szin, lap);
+				}
 				
-				printf("A másik játékos kártyája: %c %c\n", szin, lap);
 				if(lap == 'L'){
 					osszeg_ellen += 2;
 				}
@@ -133,6 +165,9 @@ int main(int argc, char** argv)
 					osszeg_ellen += 4;
 				else if(lap == 'A'){
 					osszeg_ellen += 11;
+				}
+				else if(lap==':'){
+					osszeg_ellen += 10 ;
 				}
 				else{
 					int ertek = lap - '0';
@@ -165,7 +200,7 @@ int main(int argc, char** argv)
 				end = 0;
 				break;
 			}
-			if(buffer[0]= '7')
+			else if(buffer[0]== '7')
 			{
 				printf("Adja meg tétjét!\n");
 				char *beolvas = malloc(SIZE);
