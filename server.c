@@ -111,9 +111,14 @@ char* createStringEnd()
 	char *jel = "6";
 	return jel;
 }
-char* createStringTet()
+char* createStringNew()
 {
 	char *jel = "7";
+	return jel;
+}
+char* createStringTet()
+{
+	char *jel = "8";
 	return jel;
 }
 
@@ -144,6 +149,15 @@ int isEndMessage(char *m){
 	}
 	return 0;
 }
+int isNewMessage(char *m){
+	char new[] = "UJ";
+	if( strcmp(m, new) == 0)
+	{
+		return 1;
+	}
+	return 0;
+}
+
 
 //a két összeg alapján az eredményt adja vissza
 //ebben a programban most az nyer, aki "közelebb" végzett a 21-hez
@@ -170,15 +184,14 @@ int eredmeny(int p1_eredmeny, int p2_eredmeny){
 	}
 		
 }
-
 //megcsináljuk a sztringet, amit akkor küldjük a klienseknek mikor az eredményeket küldjük
-char* eredmenyMessage(int nyertes, int pont1, int pont2){
+char* eredmenyMessage2(int nyertes, int tet1, int tet2){
 	if(nyertes == 1){
-		return ("2:Az első játékos nyert ");
+		return ("2:Az első játékos nyert: " );
 	}
 	else if(nyertes == 2)
 	{
-		return ("2:Az második játékos nyert ");
+		return ("2:Az második játékos nyert: " );
 	}
 	else if(nyertes == 3){
 		return "2:Döntetlen!";
@@ -190,6 +203,27 @@ char* eredmenyMessage(int nyertes, int pont1, int pont2){
 	
 }
 
+int eredmenyTet(int nyertes, int tet1, int tet2){
+	int nyert1=tet1*2;
+	int nyert2=tet2*2;
+
+	if(nyertes == 1){
+		return (nyert1);
+	}
+	else if(nyertes == 2)
+	{
+		return (nyert2);
+	}
+	else
+	{
+		return (0);
+	}
+	
+}
+
+
+
+
 int main(int argc, char* argv[])
 {
 	int seed = time(NULL);
@@ -199,6 +233,7 @@ int main(int argc, char* argv[])
 	
 	int listenfd, n;
 	int player1_socket, player2_socket;
+	int player1_tet, player2_tet;
 	socklen_t clilen_p1;
 	socklen_t clilen_p2;
 	char buffer[SIZE];
@@ -241,21 +276,26 @@ int main(int argc, char* argv[])
 		printf("%s \n", buffer);
 			
 		//írunk a játékosoknak, de itt most nem várunk választ
-		//memset(buffer, 0, 256);
-		//char *messageKeres = createStringTet();
-		//memcpy(buffer, messageKeres, strlen(messageKeres)+1);
 		
+		//send(player1_socket, buffer, SIZE, 0);
+		//send(player2_socket, buffer, SIZE, 0);
+
+		//tet kerese
+		memset(buffer, 0, 256);
+		char *messageK = createStringTet();
+		memcpy(buffer, messageK, strlen(messageK)+1);
 		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
 
-		//memset(buffer, 0, 256);
-		//recv(player1_socket, buffer, SIZE,0);
-		//int player1_tet = buffer[0] + '0';
-	//	memset(buffer, 0, 256);
-	//	recv(player2_socket, buffer, SIZE,0);
-	//	int player2_tet = buffer[0] +'0';
-	//	memset(buffer, 0, 256);
+		recv(player1_socket, buffer, SIZE,0);
+		player1_tet = atoi(buffer);
+		printf("%d\n",player1_tet);
+		memset(buffer, 0, 256);
 
+		recv(player2_socket, buffer, SIZE,0);
+		player2_tet = atoi(buffer);
+		memset(buffer, 0, 256);
+		printf("%d\n",player2_tet);
 		//minden kör elején nullázuk az összegeket
 		int player1_osszeg = 0;
 		int player2_osszeg = 0;
@@ -442,11 +482,15 @@ int main(int argc, char* argv[])
 		}
 			
 		//vége egy körnek, elküldük az eredményeket a játékosoknak, és kezdjük az új kört
+		//memset(buffer, 0, 256);
+		//int nyertes = eredmeny(player1_osszeg, player2_osszeg);
+		//char *message = eredmenyMessage(eredmenyMessage2(nyertes,player1_osszeg, player2_osszeg),eredmenyTet(nyertes,player1_tet, player2_tet));
+		//memcpy(buffer, message, strlen(message)+1);
+
 		memset(buffer, 0, 256);
 		int nyertes = eredmeny(player1_osszeg, player2_osszeg);
-		char *message = eredmenyMessage(nyertes,player1_osszeg, player2_osszeg);
+		char *message = eredmenyMessage2(nyertes,player1_osszeg, player2_osszeg);
 		memcpy(buffer, message, strlen(message)+1);
-		
 		//Eredmények elküldése
 		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
@@ -469,11 +513,15 @@ int main(int argc, char* argv[])
 			send(player1_socket, buffer, SIZE, 0);
 			send(player2_socket, buffer, SIZE, 0);
 			memset(buffer, 0, 256);
-			
-			
 		}
-			
-		
+		if(isNewMessage(buffer)){
+			memset(buffer, 0, 256);
+			char *messageKeres = createStringNew();
+			memcpy(buffer, messageKeres, strlen(messageKeres)+1);
+			send(player1_socket, buffer, SIZE, 0);
+			send(player2_socket, buffer, SIZE, 0);
+			memset(buffer, 0, 256);
+		}
 
 	}
 

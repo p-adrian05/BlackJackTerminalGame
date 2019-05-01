@@ -14,8 +14,7 @@ int main(int argc, char** argv)
 	int sockfd;
 	struct sockaddr_in servaddr;
 	char buffer[SIZE];
-	
-	int end = 1;
+	int end=1;
 	
 
 	if ((sockfd = socket (AF_INET, SOCK_STREAM, 0)) <0) {
@@ -36,7 +35,7 @@ int main(int argc, char** argv)
 	}
 
 	
-	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\nTŐKE - 1000\n");
+	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n");
    
 	for (;;)
 	{
@@ -45,11 +44,8 @@ int main(int argc, char** argv)
 		{
 			exit(4);
 		}
-
 		int osszeg = 0;
 		int osszeg_ellen = 0;
-
-
 		
 		for(;;)
 		{
@@ -200,7 +196,11 @@ int main(int argc, char** argv)
 				end = 0;
 				break;
 			}
-			else if(buffer[0]== '7')
+			else if(buffer[0] == '7'){
+				end = 1;
+				break;
+			}
+			else if(buffer[0]== '8')
 			{
 				printf("Adja meg tétjét!\n");
 				char *beolvas = malloc(SIZE);
