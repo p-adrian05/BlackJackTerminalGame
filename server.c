@@ -12,7 +12,8 @@
 #define SIZE 4096
 
 char Pakli[32][2];
-
+int player1_toke = 1000;
+int player2_toke=1000;
 //belerakjuk a kártyákat
 void initPakli()
 {
@@ -94,6 +95,8 @@ char* createStringMasikEredmeny(char szin, char lap, char* sztring)
 	return sztring;
 }
 
+
+
 //ezzel jelezzük a kliensnek, hogy most kérünk tőle választ
 char* createStringBekeres()
 {
@@ -119,6 +122,12 @@ char* createStringNew()
 char* createStringTet()
 {
 	char *jel = "8";
+	return jel;
+}
+
+char* createStringToke()
+{
+	char *jel = "9";
 	return jel;
 }
 
@@ -185,13 +194,13 @@ int eredmeny(int p1_eredmeny, int p2_eredmeny){
 		
 }
 //megcsináljuk a sztringet, amit akkor küldjük a klienseknek mikor az eredményeket küldjük
-char* eredmenyMessage2(int nyertes, int tet1, int tet2){
+char* eredmenyMessage(int nyertes, int tet1, int tet2){
 	if(nyertes == 1){
-		return ("2:Az első játékos nyert: " );
+		return ("2:Az első játékos nyert. Nyereménye: " );
 	}
 	else if(nyertes == 2)
 	{
-		return ("2:Az második játékos nyert: " );
+		return ("2:Az második játékos nyert. Nyereménye: " );
 	}
 	else if(nyertes == 3){
 		return "2:Döntetlen!";
@@ -208,10 +217,14 @@ int eredmenyTet(int nyertes, int tet1, int tet2){
 	int nyert2=tet2*2;
 
 	if(nyertes == 1){
+		player1_toke+=nyert1;
+		player2_toke-=tet2;
 		return (nyert1);
 	}
 	else if(nyertes == 2)
 	{
+		player1_toke-=tet1;
+		player2_toke+=nyert2;
 		return (nyert2);
 	}
 	else
@@ -220,7 +233,33 @@ int eredmenyTet(int nyertes, int tet1, int tet2){
 	}
 	
 }
+char * createEredmenyMessage(char * eredmeny, int tet){
+	char str[12];
+	char *eredmeny2 = malloc(SIZE);
+	sprintf(str, "%d", tet);
+	strcpy(eredmeny2, eredmeny);
+	strcat(eredmeny2, str);
+	return eredmeny2;
 
+}
+//char * createTokeMessagePlayerOne(int toke1){
+//	char toke[12];
+	//char *allas = malloc(SIZE);
+//	sprintf(toke, "%d", toke1);
+//	strcpy(allas, "9:Az első játékos egyenlege: " );
+//	strcat(allas, toke);
+//	return allas;
+
+//}
+//char * createTokeMessagePlayerTwo(int toke1){
+//	char toke[12];
+//	char *allas = malloc(SIZE);
+//	sprintf(toke, "%d", toke1);
+//	strcpy(allas, "9:A második játékos egyenlege: " );
+//	strcat(allas, toke);
+//	return allas;
+
+//}
 
 
 
@@ -267,6 +306,7 @@ int main(int argc, char* argv[])
 	
 	for (;;)
 	{	
+		
 		int legfelsoLapIndex = 0; //ebben a változóban tartjuk néhány hogy melyik lap van legfelül
 		pakliKever(); //megkeverjük a paklit minden kör elején
 
@@ -277,8 +317,8 @@ int main(int argc, char* argv[])
 			
 		//írunk a játékosoknak, de itt most nem várunk választ
 		
-		//send(player1_socket, buffer, SIZE, 0);
-		//send(player2_socket, buffer, SIZE, 0);
+		send(player1_socket, buffer, SIZE, 0);
+		send(player2_socket, buffer, SIZE, 0);
 
 		//tet kerese
 		memset(buffer, 0, 256);
@@ -296,6 +336,7 @@ int main(int argc, char* argv[])
 		player2_tet = atoi(buffer);
 		memset(buffer, 0, 256);
 		printf("%d\n",player2_tet);
+		memset(buffer, 0, 256);
 		//minden kör elején nullázuk az összegeket
 		int player1_osszeg = 0;
 		int player2_osszeg = 0;
@@ -482,20 +523,30 @@ int main(int argc, char* argv[])
 		}
 			
 		//vége egy körnek, elküldük az eredményeket a játékosoknak, és kezdjük az új kört
-		//memset(buffer, 0, 256);
-		//int nyertes = eredmeny(player1_osszeg, player2_osszeg);
-		//char *message = eredmenyMessage(eredmenyMessage2(nyertes,player1_osszeg, player2_osszeg),eredmenyTet(nyertes,player1_tet, player2_tet));
-		//memcpy(buffer, message, strlen(message)+1);
-
 		memset(buffer, 0, 256);
 		int nyertes = eredmeny(player1_osszeg, player2_osszeg);
-		char *message = eredmenyMessage2(nyertes,player1_osszeg, player2_osszeg);
-		memcpy(buffer, message, strlen(message)+1);
-		//Eredmények elküldése
+		char *message = createEredmenyMessage(eredmenyMessage(nyertes,player1_osszeg, player2_osszeg),eredmenyTet(nyertes,player1_tet, player2_tet));
+	    memcpy(buffer, message, strlen(message)+1);
+
 		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
-		memset(buffer, 0, 256);
 
+		//Egyenleg
+		//memset(buffer, 0, 256);
+		//char *messageToke1 = createTokeMessagePlayerOne(player1_toke);
+		//memcpy(buffer, messageToke1, strlen(messageToke1)+1);
+		//send(player1_socket, buffer, SIZE, 0);	
+		//send(player2_socket, buffer, SIZE, 0);
+		//memset(buffer, 0, 256);
+
+		//char *messageToke2 = createTokeMessagePlayerOne(player2_toke);
+		//memcpy(buffer, messageToke2, strlen(messageToke2)+1);
+		//send(player1_socket, buffer, SIZE, 0);	
+		///send(player2_socket, buffer, SIZE, 0);
+		//memset(buffer, 0, 256);
+
+
+		//Ujra valasz
 		char * messageKeres = createStringUjra();
 		memcpy(buffer, messageKeres, strlen(messageKeres)+1);
 		send(player1_socket, buffer, SIZE, 0);

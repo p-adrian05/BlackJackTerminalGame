@@ -35,8 +35,9 @@ int main(int argc, char** argv)
 	}
 
 	
-	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n");
-   
+	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n\n");
+    printf("Színek:\nt - tök\nm - makk\nz - zold\np - piros\n\n");
+	printf("Kártyák:\nA - ász\nK - király\nF - felső\nL - alsó\n7\n8\n9\n10\n");
 	for (;;)
 	{
 		//egy menet
@@ -209,6 +210,7 @@ int main(int argc, char** argv)
 				memcpy(buffer, beolvas, strlen(beolvas)+1);
 				send(sockfd, buffer, SIZE, 0);
 			}
+			
 
 			
 			printf("--------------------------\n");
