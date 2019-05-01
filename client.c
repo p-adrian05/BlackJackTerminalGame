@@ -35,9 +35,11 @@ int main(int argc, char** argv)
 	}
 
 	
-	printf("OK - kártya kérése\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n\n");
+	printf("OK - kártya kérése\nOK-DUPLA -kártya kérése és a tét duplázása\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n
+	15 pontnál vagy kevesebbnél való megállás esetén a tét 2x a büntetés\n");
     printf("Színek:\nt - tök\nm - makk\nz - zold\np - piros\n\n");
 	printf("Kártyák:\nA - ász\nK - király\nF - felső\nL - alsó\n7\n8\n9\n10\n");
+
 	for (;;)
 	{
 		//egy menet

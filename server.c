@@ -139,6 +139,15 @@ int isOkMessage(char *m){
 	}
 	return 0;
 }
+int isOkMessageDouble(char *m){
+	char ok[] = "OK-DUPLA";
+	if( strcmp(m, ok) == 0)
+	{
+		return 1;
+	}
+	return 0;
+}
+
 
 int isGiveUpMessage(char *m){
 	char felad[] = "FELAD";
@@ -242,21 +251,28 @@ char * createTokeMessagePlayerTwo(int toke1){
 
 int player1_toke=1000;
 int player2_toke=1000;
-
+int renoszon1 = 1;
+int renoszon2 =1;
 int eredmenyTet(int nyertes, int tet1, int tet2){
 	int nyert1=tet1*2;
 	int nyert2=tet2*2;
 
-	if(nyertes == 1){
+	if(nyertes == 1 && renoszon1 == 1){
 		player1_toke+=nyert1;
 		player2_toke-=tet2;
 		return (nyert1);
 	}
-	else if(nyertes == 2)
+	else if(nyertes == 1 && renoszon1 == 0){
+		player1_toke-=nyert1;
+	}
+	else if(nyertes == 2 && renoszon2 == 1)
 	{
 		player1_toke-=tet1;
 		player2_toke+=nyert2;
 		return (nyert2);
+	}
+	else if(nyertes == 2 && renoszon2 == 0){
+		player2_toke-=nyert2;
 	}
 	else
 	{
@@ -385,10 +401,12 @@ int main(int argc, char* argv[])
 				break;
 			}
 			if(player1_osszeg<15 && voltPassz_player1){
-				player1_tet *= 2;
+				player1_tet = player1_tet*2;
+				renoszon1 =0;
 			}
 			if(player2_osszeg<15 && voltPassz_player2){
-				player2_tet *= 2;
+				player1_tet = player1_tet*2;
+				renoszon2 =0;
 			}	
 					
 			//ebben az if-ben küldi a szerver a "kihúzott" lapjait az első kliensnek
@@ -500,12 +518,19 @@ int main(int argc, char* argv[])
 				
 				printf("%s \n", buffer);
 				//feldolgozzuk a választ
-				if(isGiveUpMessage(buffer))
+				if(isGiveUpMessage(buffer)){
 					voltPassz_player1 = 1;
-				else if(isOkMessage(buffer))
+				}
+				else if(isOkMessage(buffer)){
 					;
-				else
-					break; //ha valami nem olyan üzenetet kap amit kellene csak kilépünk a körből, nem kezeljük le
+				}
+				else if(isOkMessageDouble(buffer)){
+					player1_tet *= 2;
+				}
+				else{
+					break;
+				}
+					
 			}
 				
 			//ebben az ifben kéri a szerver a második játékost hogy mondja meg, kér-e még lapot vagy passzol
@@ -522,12 +547,18 @@ int main(int argc, char* argv[])
 				recv(player2_socket, buffer, SIZE,0);
 				printf("%s \n", buffer);
 				//feldolgozzuk a választ
-				if(isGiveUpMessage(buffer))
+				if(isGiveUpMessage(buffer)){
 					voltPassz_player2 = 1;
-				else if(isOkMessage(buffer))
+				}
+				else if(isOkMessage(buffer)){
 					;
-				else
-					break; //ha valami nem olyan üzenetet kap amit kellene csak kilépünk a körből, nem kezeljük le
+				}
+				else if(isOkMessageDouble(buffer)){
+					player2_tet *= 2;
+				}
+				else{
+					break;
+				}
 			}
 			
 		}
