@@ -35,14 +35,14 @@ int main(int argc, char** argv)
 	}
 
 	
-	printf("OK - kártya kérése\nOK-DUPLA -kártya kérése és a tét duplázása\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n15 pontnál vagy kevesebbnél való megállás esetén a tét 2x a büntetés\n");
-	printf("A kezdő tőke: 1000\n");
+	printf("OK - kártya kérése\nOK-DUPLA -kártya kérése és a tét duplázása\nFELAD- feladás\nVEGE - játék vége\nUJ - új játék\n
+	15 pontnál vagy kevesebbnél való megállás esetén a tét 2x a büntetés\n");
     printf("Színek:\nt - tök\nm - makk\nz - zold\np - piros\n\n");
 	printf("Kártyák:\nA - ász\nK - király\nF - felső\nL - alsó\n7\n8\n9\n10\n");
 
 	for (;;)
 	{
-		
+		//egy menet
 		if(end == 0)
 		{
 			exit(4);
@@ -52,19 +52,23 @@ int main(int argc, char** argv)
 		
 		for(;;)
 		{
-			
+			//a kliens lényegében mindig csak vár egy üzenetre a szervertől, és ha kap valamit, akkor azt értelmezi
 			memset(buffer, 0, 256);
 			recv(sockfd, buffer, SIZE,0);
-			
+			//str = trim(str);
 				
-			//kapott kartya feldogozasa
+			//ha a kapott üzenet 1-el kezdődik, az azt jelenti, hogy kártyát osztottak nekünk, és ezt feldolgozzuk
 			if(buffer[0] == '1'){
+				//szétbontjuk a sztringet:
+				//levágjuk a kezdő számot, majd felbontjuk ',' karakterekre
 				char buffer_copy[SIZE];
+				//printf("%s\n",buffer);
 				memcpy(buffer_copy, buffer, strlen(buffer)+1);
 				char *p;
 				p = strtok(buffer_copy, ",");
+				//printf("%s\n",p);
 				char lap;
-			
+				int lap10;
 				char szin;
 
 				if(p)
@@ -72,10 +76,12 @@ int main(int argc, char** argv)
 					szin = p[2];
 				}
 				p = strtok(NULL, ",");
-
+				//printf("%s\n",p);
 				if(p){
 					
 						lap = p[0];
+			
+
 				}
 					
 				if(lap==':'){
@@ -85,6 +91,7 @@ int main(int argc, char** argv)
 				{
 						printf("Kapott kártya: %c %c\n", szin, lap);
 				}
+				
 
 				if(lap == 'L'){
 					osszeg += 2;
@@ -106,8 +113,8 @@ int main(int argc, char** argv)
 				printf("Jelenlegi összeg: %d\n", osszeg);
 			}
 			else if(buffer[0] == '2'){
-				//eredményt kaptuk meg
-				
+				//ha a kapott üzenet 2-vel kezdődik, az azt jelenti, lezárult egy kör, és az eredményt kaptuk meg
+				// az eredményt küldték
 				
 				printf("%s\n",buffer);
 				printf("=================================\n");
@@ -116,8 +123,9 @@ int main(int argc, char** argv)
 				break;
 			}
 			else if(buffer[0] == '3'){
-				//kartya feldolgozas masik jatekosnal
-
+				//ha a kapott üzenet 3-al kezdődik, az azt jelenti, hogy kártyát osztottak a másik játékosnak, és ezt feldolgozzuk
+				//szétbontjuk a sztringet:
+				//levágjuk a kezdő számot, majd felbontjuk ',' karakterekre
 				char buffer_copy[SIZE];
 				
 				memcpy(buffer_copy, buffer, strlen(buffer)+1);
@@ -126,7 +134,7 @@ int main(int argc, char** argv)
 
 				char lap;
 				char szin;
-
+				int lap10;
 				if(p)
 				{
 					szin = p[2];
@@ -167,6 +175,8 @@ int main(int argc, char** argv)
 			}
 			else if(buffer[0] == '4')
 			{
+				//ha a kapott üzenet 4-el kezdődik, az azt jelenti, hogy vár tőlünk választ a szerver
+				//hogy passzolni szeretnék, vagy jöhet a következő kártya
 				printf("Kér még kártyát vagy feladja?\n");
 				char *beolvas = malloc(SIZE);
 				memset(buffer, 0, 256);
@@ -201,7 +211,6 @@ int main(int argc, char** argv)
 				memcpy(buffer, beolvas, strlen(beolvas)+1);
 				send(sockfd, buffer, SIZE, 0);
 			}
-			//egyenlegek kiirasa
 			else if(buffer[0]== '9'){
 				printf("%s\n",buffer);
 			}
@@ -215,7 +224,7 @@ int main(int argc, char** argv)
 			
 	}
 		
-	close(sockfd);
+	
 	return 0;
 }
 

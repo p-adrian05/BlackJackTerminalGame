@@ -8,11 +8,13 @@
 #include <unistd.h>
 #include <arpa/inet.h> 
 
+#define LISTENQ 2
 #define SIZE 4096
 
 char Pakli[32][2];
 
-void createPakli()
+//belerakjuk a kártyákat
+void initPakli()
 {
 	int index = 0;
 	for(int i = 7; i <= 10; i++){
@@ -35,6 +37,16 @@ void createPakli()
 	
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
+			//int ertek;
+			//if(lap[j] == 'A')
+			//	ertek = 11;
+			//if(lap[j] == 'L')
+			//	ertek = 2;
+			//if(lap[j] == 'F')
+			//	ertek = 3;
+		//	if(lap[j] == 'K')
+			//	ertek = 4;
+				
 			Pakli[index][0] = szin[i];
 			Pakli[index][1] = lap[j];
 			index++;
@@ -43,7 +55,7 @@ void createPakli()
 	
 }
 
-
+//megkeverjük a paklit
 void pakliKever()
 {
 	int n = 32;
@@ -60,7 +72,7 @@ void pakliKever()
 	}
 }
 
-//lap osztas string
+//egy függvény, amiben egy olyan sztringet csinálunk, amit majd küldünk a kliensnek mikor "osztjuk" neki a lapot
 char* createString(char szin, char lap, char *sztring)
 {	
 	sztring = malloc(SIZE);
@@ -71,7 +83,7 @@ char* createString(char szin, char lap, char *sztring)
 	return sztring;
 }
 
-//lap osztas masik
+//egy függvény, amiben egy olyan sztringet csinálunk, amit majd küldünk a kliensnek mikor "osztjuk" a másik játékosnak a lapot
 char* createStringMasikEredmeny(char szin, char lap, char* sztring)
 {
 	sztring = malloc(SIZE);
@@ -82,6 +94,9 @@ char* createStringMasikEredmeny(char szin, char lap, char* sztring)
 	return sztring;
 }
 
+
+
+//ezzel jelezzük a kliensnek, hogy most kérünk tőle választ
 char* createStringBekeres()
 {
 	char *jel = "4";
@@ -115,7 +130,7 @@ char* createStringToke()
 	return jel;
 }
 
-
+//csak ellenőrizzük a kapott üzenetet
 int isOkMessage(char *m){
 	char ok[] = "OK";
 	if( strcmp(m, ok) == 0)
@@ -160,7 +175,9 @@ int isNewMessage(char *m){
 	return 0;
 }
 
-//a nyertes megallapitasa
+
+//a két összeg alapján az eredményt adja vissza
+//ebben a programban most az nyer, aki "közelebb" végzett a 21-hez
 int eredmeny(int p1_eredmeny, int p2_eredmeny){
 	if(p1_eredmeny<=21 && p2_eredmeny<=21){
 		if(abs(p1_eredmeny-21) < abs(p2_eredmeny-21)){
@@ -180,11 +197,11 @@ int eredmeny(int p1_eredmeny, int p2_eredmeny){
 		return 2;
 	}
 	else if(p1_eredmeny==p2_eredmeny && p1_eredmeny<=21){
-		return 3; 
+		return 3; //döntetlen
 	}
 		
 }
-//eredmeny üzenet 
+//megcsináljuk a sztringet, amit akkor küldjük a klienseknek mikor az eredményeket küldjük
 char* eredmenyMessage(int nyertes, int tet1, int tet2){
 	if(nyertes == 1){
 		return ("2:Az első játékos nyert. Nyereménye: " );
@@ -203,7 +220,7 @@ char* eredmenyMessage(int nyertes, int tet1, int tet2){
 	
 }
 
-//eredmeny üzenethez hozzafüzes a nyeremenyt
+
 char * createEredmenyMessage(char * eredmeny, int tet){
 	char str[12];
 	char *eredmeny2 = malloc(SIZE);
@@ -213,8 +230,6 @@ char * createEredmenyMessage(char * eredmeny, int tet){
 	return eredmeny2;
 
 }
-
-//aktualis eredmeny üzenet
 char * createTokeMessagePlayerOne(int toke1){
 	char toke[32];
 	char *allas = malloc(SIZE);
@@ -238,8 +253,6 @@ int player1_toke=1000;
 int player2_toke=1000;
 int renoszon1 = 1;
 int renoszon2 =1;
-
-//toke szamitasa
 int eredmenyTet(int nyertes, int tet1, int tet2){
 	int nyert1=tet1*2;
 	int nyert2=tet2*2;
@@ -270,12 +283,14 @@ int eredmenyTet(int nyertes, int tet1, int tet2){
 
 int main(int argc, char* argv[])
 {
-
-	createPakli();
-	int player1_tet, player2_tet;
-
-	int fd;
+	int seed = time(NULL);
+    srand(seed);
+	
+	initPakli();
+	
+	int listenfd, n;
 	int player1_socket, player2_socket;
+	int player1_tet, player2_tet;
 	
 	socklen_t clilen_p1;
 	socklen_t clilen_p2;
@@ -284,47 +299,49 @@ int main(int argc, char* argv[])
 	struct sockaddr_in cliaddr_p1;
 	struct sockaddr_in cliaddr_p2;
 
-	fd = socket (AF_INET, SOCK_STREAM, 0);
+	//AF_INET -> IPv4
+	//SOCK_STREAM,0 -> TCP
+	listenfd = socket (AF_INET, SOCK_STREAM, 0);
 
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(atoi(argv[1]));
 
-	bind (fd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	bind (listenfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
-	listen (fd, 2);
+	listen (listenfd, 2);
 
 	printf("%s\n","Waiting for connections.");
 	
 	clilen_p1 = sizeof(cliaddr_p1);
-	player1_socket = accept (fd, (struct sockaddr *) &cliaddr_p1, &clilen_p1);
+	player1_socket = accept (listenfd, (struct sockaddr *) &cliaddr_p1, &clilen_p1);
 	printf("%s\n","Player one connected.");
 	
 	printf("%s\n","Waiting for player two connection.");
 
 	clilen_p2 = sizeof(cliaddr_p2);
-	player2_socket = accept (fd, (struct sockaddr *) &cliaddr_p2, &clilen_p2);
+	player2_socket = accept (listenfd, (struct sockaddr *) &cliaddr_p2, &clilen_p2);
 	printf("%s\n","Player two connected.");
 	
-	
-
 	for (;;)
 	{	
 		
-		int legfelsoLapIndex = 0; 
-		pakliKever(); 
+		int legfelsoLapIndex = 0; //ebben a változóban tartjuk néhány hogy melyik lap van legfelül
+		pakliKever(); //megkeverjük a paklit minden kör elején
 
-		//Jaték kezdese
+		//Kezdődik a játék, elküldjük üzenetben
 		char startMessage[] = "Játékosok csatlakoztak, a játék kezdődik.";
 		memcpy(buffer, startMessage, strlen(startMessage)+1);
 		printf("%s \n", buffer);
-
+			
+		//írunk a játékosoknak, de itt most nem várunk választ
+		
 		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
 
 		//tet kerese
 		player1_tet=0;
-		player2_tet=0;	
+		player1_tet=0;	
 
 		memset(buffer, 0, 256);
 		char *messageK = createStringTet();
@@ -342,32 +359,37 @@ int main(int argc, char* argv[])
 		memset(buffer, 0, 256);
 		printf("%d\n",player2_tet);
 		memset(buffer, 0, 256);
-
-		
+		//minden kör elején nullázuk az összegeket
 		int player1_osszeg = 0;
 		int player2_osszeg = 0;
 		
+		//ebben a bool változóban tartjuk nyílván, hogy történt-e passz, ha történt, true-ra állítjuk
+		//ha történt passz, nem kell bizonyos küldéseknek lefutnia
 		int voltPassz_player1 = 0;
 		int voltPassz_player2 = 0;
 			
 		for(;;)
 		{
 				
-			//ellenőrizzük hogy vége e a körne
-			
+			//ellenőrizzük hogy vége van-e a körnek a játék szabályai szerint
+			//ha mindketten passzoltak legyen vége a körnek
 			if(voltPassz_player1 && voltPassz_player2){
 				break;
 			}
 			
-		
+			//ha valamelyikük pont 21-et kap legyen vége a körnek
 			if(player1_osszeg == 21 || player2_osszeg == 21){
 				break;
 			}
-
+				
+				
+			//ha mindketten meghaladják vagy elérik a 21-et	legyen vége a körnek
 			if(player1_osszeg >= 21 && player2_osszeg >= 21){
 				break;
 			}
 				
+					
+			//ha az egyik játékos passzolt és a másik is elérte a 21-et legyen vége a körnek
 			if((player1_osszeg >= 21 && voltPassz_player2) && (player2_osszeg >= 21 && voltPassz_player1)){
 				break;
 			}
@@ -387,7 +409,8 @@ int main(int argc, char* argv[])
 				renoszon2 =0;
 			}	
 					
-			//eredmeny szamolas és küldes elso jatekosnak
+			//ebben az if-ben küldi a szerver a "kihúzott" lapjait az első kliensnek
+			//nem lép be ha az első kliens passzolt, tehát nem kap új lapot
 			if(!voltPassz_player1 && player1_osszeg < 21){
 				//"levesszük" a legfelső lapot, és hozzáadjuk az első játékos összegéhez
 				int lapIndex = legfelsoLapIndex;
@@ -416,20 +439,24 @@ int main(int argc, char* argv[])
 				}
 					
 				printf("%d \n",player1_osszeg);
-
+				//a buffer memseteljük mindig küldések és fogadások között
+				//azaz "kitöröljük" a tartalmát, hogy ne legyen probléma
 				memset(buffer, 0, SIZE);
 				char *message = createString(Pakli[lapIndex][0],Pakli[lapIndex][1],message);
 				memcpy(buffer, message, SIZE);
 					
-				
+				//elküldjük az eredményt az első játékosnak
 				send(player1_socket, buffer, SIZE, 0);
+				//elküldjük az eredményt a másik játékosnak is
 				memset(buffer, 0, 256);
 				message = createStringMasikEredmeny(Pakli[lapIndex][0],Pakli[lapIndex][1],message);
 				memcpy(buffer, message, strlen(message)+1);
 				send(player2_socket, buffer, SIZE, 0);
 			}
-
-			//eredmeny szamolas és küldes masodik jatekosnak
+				
+			//ebben az if-ben küldi a szerver a "kihúzott" lapjait a második kliensnek
+			//nem lép be ha a második kliens passzolt, tehát nem kap új lapot
+			//ugyanaz mint az előző if, csak player 2-re
 			if(!voltPassz_player2 && player2_osszeg < 21){
 				//"levesszük" a legfelső lapot, és hozzáadjuk az első játékos összegéhez
 				int lapIndex = legfelsoLapIndex;
@@ -458,11 +485,15 @@ int main(int argc, char* argv[])
 				}
 					
 				printf("%d \n",player2_osszeg);
+				//a buffer memseteljük mindig küldések és fogadások között
+				//azaz "kitöröljük" a tartalmát, hogy ne legyen probléma
 				memset(buffer, 0, SIZE);
 				char *message = createString(Pakli[lapIndex][0],Pakli[lapIndex][1],message);
 				memcpy(buffer, message, SIZE);
 					
+				//elküldjük az eredményt az első játékosnak
 				send(player2_socket, buffer, SIZE, 0);
+				//elküldjük az eredményt a másik játékosnak is
 				memset(buffer, 0, 256);
 				message = createStringMasikEredmeny(Pakli[lapIndex][0],Pakli[lapIndex][1],message);
 				memcpy(buffer, message, strlen(message)+1);
@@ -472,18 +503,21 @@ int main(int argc, char* argv[])
 					
 			}
 				
-			//továbbmenet kérése és ellenőrzése elso jatekos
+			//ebben az ifben kéri a szerver az első játékost hogy mondja meg, kér-e még lapot vagy passzol
+			//ha passzolt az első játékos, akkor nem kér tőle semmit már ebben a körben
 			if(!voltPassz_player1 && player1_osszeg < 21){
+				//elküldjük a kérést
 				memset(buffer, 0, 256);
 				char *messageKeres = createStringBekeres();
 				memcpy(buffer, messageKeres, strlen(messageKeres)+1);
 				send(player1_socket, buffer, SIZE, 0);
 				
+				//várjuk a választ
 				memset(buffer, 0, 256);
 				recv(player1_socket, buffer, SIZE,0);
 				
 				printf("%s \n", buffer);
-
+				//feldolgozzuk a választ
 				if(isGiveUpMessage(buffer)){
 					voltPassz_player1 = 1;
 				}
@@ -499,18 +533,20 @@ int main(int argc, char* argv[])
 					
 			}
 				
-			//továbbmenet kérése és ellenőrzése elso jatekos
+			//ebben az ifben kéri a szerver a második játékost hogy mondja meg, kér-e még lapot vagy passzol
+			//ha passzolt az első játékos, akkor nem kér tőle semmit már ebben a körben
 			if(!voltPassz_player2 && player2_osszeg < 21){
+				//elküldjük a kérést
 				memset(buffer, 0, 256);
 				char *messageKeres = createStringBekeres();
 				memcpy(buffer, messageKeres, strlen(messageKeres)+1);
 				send(player2_socket, buffer, SIZE, 0);
 				
-				
+				//várjuk a választ
 				memset(buffer, 0, 256);
 				recv(player2_socket, buffer, SIZE,0);
 				printf("%s \n", buffer);
-		
+				//feldolgozzuk a választ
 				if(isGiveUpMessage(buffer)){
 					voltPassz_player2 = 1;
 				}
@@ -527,7 +563,7 @@ int main(int argc, char* argv[])
 			
 		}
 			
-		//kor vege, eredmenyek kuldese 
+		//vége egy körnek, elküldük az eredményeket a játékosoknak, és kezdjük az új kört
 		memset(buffer, 0, 256);
 		int nyertes = eredmeny(player1_osszeg, player2_osszeg);
 		char *message = createEredmenyMessage(eredmenyMessage(nyertes,player1_osszeg, player2_osszeg),eredmenyTet(nyertes,player1_tet, player2_tet));
@@ -536,7 +572,7 @@ int main(int argc, char* argv[])
 		send(player1_socket, buffer, SIZE, 0);
 		send(player2_socket, buffer, SIZE, 0);
 
-		//Egyenleg kuldese
+		//Egyenleg
 		memset(buffer, 0, 256);
 		char *messageToke1 = createTokeMessagePlayerOne(player1_toke);
 		memcpy(buffer, messageToke1, strlen(messageToke1)+1);
@@ -551,15 +587,16 @@ int main(int argc, char* argv[])
 		memset(buffer, 0, 256);
 
 
-		//Uj kor vagy vege valasz kuldese és valasz feldolgozas
+		//Ujra valasz
 		char * messageKeres = createStringUjra();
 		memcpy(buffer, messageKeres, strlen(messageKeres)+1);
 		send(player1_socket, buffer, SIZE, 0);
+		//várjuk a választ
 		memset(buffer, 0, 256);
 		recv(player1_socket, buffer, SIZE,0);
 		printf("%s \n", buffer);
 		
-
+		//feldolgozzuk a választ
 		if(isEndMessage(buffer))
 		{
 			memset(buffer, 0, 256);
