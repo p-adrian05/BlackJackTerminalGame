@@ -389,7 +389,6 @@ int main(int argc, char* argv[])
 					
 			//eredmeny szamolas és küldes elso jatekosnak
 			if(!voltPassz_player1 && player1_osszeg < 21){
-				//"levesszük" a legfelső lapot, és hozzáadjuk az első játékos összegéhez
 				int lapIndex = legfelsoLapIndex;
 				legfelsoLapIndex++;
 				if(Pakli[lapIndex][1] == 'L'){
@@ -431,7 +430,6 @@ int main(int argc, char* argv[])
 
 			//eredmeny szamolas és küldes masodik jatekosnak
 			if(!voltPassz_player2 && player2_osszeg < 21){
-				//"levesszük" a legfelső lapot, és hozzáadjuk az első játékos összegéhez
 				int lapIndex = legfelsoLapIndex;
 				legfelsoLapIndex++;
 				if(Pakli[lapIndex][1] == 'L'){
